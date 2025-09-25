@@ -1,6 +1,6 @@
-import {activeSub} from "./effect";
-import type {Dep, Link} from "./system";
-import {link, propagate} from "./system";
+import { activeSub } from "./effect";
+import type { Dep, Link } from "./system";
+import { link, propagate } from "./system";
 
 /**
  * 响应式数据标记
@@ -14,7 +14,10 @@ export enum ReactiveFlags {
  * @param value 创建 ref 对象的初始值
  * @returns 响应式数据
  */
-export function ref<T>(value: T): RefImpl<T> {
+export function ref<T>(value?: T): RefImpl<T> {
+    if (isRef(value)) {
+        return value as RefImpl<T>
+    }
     return new RefImpl(value)
 }
 
@@ -36,7 +39,7 @@ export class RefImpl<T> {
      */
     subsTail: Link
 
-    constructor(value: T) {
+    constructor(value?: T) {
         this._value = value
     }
 
@@ -47,6 +50,7 @@ export class RefImpl<T> {
     }
 
     set value(newValue) {
+        if (this._value === newValue) return
         this._value = newValue
         // 触发订阅者
         triggerRef(this)
