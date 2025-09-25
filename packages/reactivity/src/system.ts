@@ -113,7 +113,10 @@ export function propagate(subs: Link) {
     let link = subs
     let queuedEffect = []
     while (link) {
-        queuedEffect.push(link.sub)
+        const sub = link.sub
+        if (!sub.tracking) {
+            queuedEffect.push(link.sub)
+        }
         link = link.nextSub
     }
 

@@ -19,6 +19,13 @@ describe('reactivity/effect', () => {
         count.value++
         expect(dummy).toBe(1)
     });
+    
+    it('recursion', () => {
+        const count = ref(0)
+        const fnSpy = vi.fn(() => { count.value++})
+        effect(fnSpy)
+        expect(fnSpy).toHaveBeenCalledTimes(1)
+    });
 
     it('switch branches', () => {
         const name = ref("foo")

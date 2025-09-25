@@ -13,18 +13,21 @@ export class ReactiveEffect {
      */
     private depsTail: Link | undefined
 
+    private tracking: boolean = false
+
     constructor(public fn) {
     }
 
     private run() {
         const prevSub = activeSub
         activeSub = this
-
+        this.tracking = true
         startTrack(this)
 
         try {
             return this.fn()
         } finally {
+            this.tracking = false
             endTrack(this)
             activeSub = prevSub
 
