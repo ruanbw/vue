@@ -63,7 +63,7 @@ export function link(dep: Dep, sub: Sub) {
         sub,
         prevSub: undefined,
         nextSub: undefined,
-        nextDep: undefined,
+        nextDep,
     }
 
     /**
@@ -85,10 +85,10 @@ export function link(dep: Dep, sub: Sub) {
      * 1. 尾节点有，那就往尾节点后面加
      * 2. 如果尾节点没有，则表示第一次关联，那就往头节点加，头尾相同
      */
-    if (sub.depsTail){
+    if (sub.depsTail) {
         sub.depsTail.nextDep = newLink
         sub.depsTail = newLink
-    }else{
+    } else {
         sub.deps = newLink
         sub.depsTail = newLink
     }
@@ -107,4 +107,67 @@ export function propagate(subs: Link) {
     }
 
     queuedEffect.forEach((effect) => effect.notify())
+}
+
+/**
+ * 开始收集依赖
+ * @param sub 
+ */
+export function startTrack(sub: Sub) {
+    // 标记为重新执行依赖
+    sub.depsTail = undefined
+}
+
+/**
+ * 依赖收集完毕，清除未使用的依赖
+ * @param sub 
+ */
+export function endTrack(sub: Sub) {
+    const depsTail = sub.depsTail
+    /**
+     * depsTail存在，并且depsTail有nextDep 
+     * depsTail不存在，但deps存在
+     */
+    if (depsTail) {
+        if (depsTail.nextDep) {
+            clearTracking(depsTail.nextDep)
+            depsTail.nextDep = undefined
+        }
+    } else if (sub.deps) {
+        clearTracking(sub.deps)
+        sub.deps = undefined
+    }
+}
+
+function clearTracking(link: Link) {
+    while (link) {
+        const { dep, nextDep, nextSub, prevSub } = link
+
+        /**
+         * 如果 prevSub 有，那就把 prevSub 的下一个节点指向当前的下一个
+         * 如果没有，那就是头节点，那就把 dep.subs 指向当前节点的下一个
+         */
+        if (prevSub) {
+            prevSub.nextSub = nextSub
+            link.nextSub = undefined
+        } else {
+            dep.subs = nextSub
+        }
+
+        /**
+         * 如果 nextSub有，那就把nextSub的上一个节点，指向当前节点的上一个节点
+         * 如果nextSub没有，那就是尾节点，把dep.depTail指向上一个节点
+         */
+        if (nextSub) {
+            nextSub.prevSub = prevSub
+            link.prevSub = undefined
+        } else {
+            dep.subsTail = prevSub
+        }
+
+        link.dep = undefined
+        link.sub = undefined
+        link.nextDep = undefined
+        link = nextDep
+    }
 }

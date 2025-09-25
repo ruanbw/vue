@@ -25,19 +25,19 @@ export function ref<T>(value?: T): RefImpl<T> {
  * ref 对象实现类
  */
 export class RefImpl<T> {
-    _value: T
+    private _value: T
 
-    [ReactiveFlags.IS_REF] = true
+    private readonly [ReactiveFlags.IS_REF] = true
 
     /**
      * 订阅者链表的头节点，理解为我们将的 head
      */
-    subs: Link
+    private subs: Link
 
     /**
      * 订阅者链表的尾节点，理解为我们讲的 tail
      */
-    subsTail: Link
+    private subsTail: Link
 
     constructor(value?: T) {
         this._value = value

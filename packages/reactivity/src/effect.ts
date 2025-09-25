@@ -1,4 +1,4 @@
-import {Link} from "./system";
+import { endTrack, Link, startTrack } from "./system";
 
 export let activeSub
 
@@ -6,27 +6,28 @@ export class ReactiveEffect {
     /**
      * 依赖项链表的头节点
      */
-    deps: Link | undefined
+    private deps: Link | undefined
 
     /**
      * 依赖项链表的尾节点
      */
-    depsTail: Link | undefined
+    private depsTail: Link | undefined
 
     constructor(public fn) {
     }
 
-    run() {
+    private run() {
         const prevSub = activeSub
         activeSub = this
 
-        // 标记为重新执行依赖
-        this.depsTail = undefined
+        startTrack(this)
 
         try {
             return this.fn()
         } finally {
+            endTrack(this)
             activeSub = prevSub
+
         }
     }
 
@@ -34,7 +35,7 @@ export class ReactiveEffect {
         this.scheduler()
     }
 
-    scheduler() {
+    private scheduler() {
         this.run()
     }
 }
@@ -43,9 +44,9 @@ export function effect(fn: Function, options?: any) {
     const _effect = new ReactiveEffect(fn)
     Object.assign(_effect, options)
 
-    _effect.run()
+    _effect.notify()
 
-    const runner = _effect.run.bind(_effect)
+    const runner = _effect.notify.bind(_effect)
     runner.effect = _effect
 
     return runner
