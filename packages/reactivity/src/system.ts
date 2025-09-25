@@ -31,6 +31,8 @@ export interface Link {
     nextDep: Link | undefined
 }
 
+let linkPool: Link | undefined
+
 /**
  * 链接链表关系
  * @param dep 依赖
@@ -58,12 +60,21 @@ export function link(dep: Dep, sub: Sub) {
      * dep  理解为响应式对象
      * sub  理解为使用、访问响应式对象的函数
      */
-    const newLink: Link = {
-        dep,
-        sub,
-        prevSub: undefined,
-        nextSub: undefined,
-        nextDep,
+    let newLink: Link = undefined
+    if (linkPool) {
+        newLink = linkPool
+        linkPool = linkPool.nextDep
+        newLink.nextDep = nextDep
+        newLink.dep = dep
+        newLink.sub = sub
+    } else {
+        newLink = {
+            dep,
+            sub,
+            prevSub: undefined,
+            nextSub: undefined,
+            nextDep,
+        }
     }
 
     /**
@@ -167,7 +178,8 @@ function clearTracking(link: Link) {
 
         link.dep = undefined
         link.sub = undefined
-        link.nextDep = undefined
+        link.nextDep = linkPool
+        linkPool = link
         link = nextDep
     }
 }
