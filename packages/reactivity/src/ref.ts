@@ -1,5 +1,5 @@
 import { activeSub } from "./effect";
-import type { Dep, Link } from "./system";
+import type { Dependencie, Link } from "./system";
 import { link, propagate } from "./system";
 
 /**
@@ -61,7 +61,7 @@ export class RefImpl<T> {
  * 收集依赖，建立 ref 和 effect 之间的链表关系
  * @param dep
  */
-function trackRef(dep: Dep) {
+function trackRef(dep: Dependencie) {
     if (activeSub) {
         link(dep, activeSub)
     }
@@ -71,7 +71,7 @@ function trackRef(dep: Dep) {
  * 触发 ref 关联的 effect 重新执行
  * @param dep
  */
-function triggerRef(dep: Dep) {
+function triggerRef(dep: Dependencie) {
     if (dep.subs) {
         propagate(dep.subs)
     }
