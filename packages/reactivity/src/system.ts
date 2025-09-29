@@ -16,6 +16,8 @@ export interface Sub {
     deps: Link | undefined
     // 依赖项链表的尾节点
     depsTail: Link | undefined
+
+    tracking: boolean
 }
 
 export interface Link {
@@ -105,6 +107,12 @@ export function link(dep: Dependencie, sub: Sub) {
     }
 }
 
+function processComputedUpdate(sub) {
+    if(sub.dirty && sub.update()){
+        propagate(sub.subs)
+    }
+}
+
 /**
  * 传播更新
  * @param subs 订阅者
@@ -115,7 +123,12 @@ export function propagate(subs: Link) {
     while (link) {
         const sub = link.sub
         if (!sub.tracking) {
-            queuedEffect.push(link.sub)
+            if ("update" in sub) {
+                sub.dirty = true
+                processComputedUpdate(sub)
+            } else {
+                queuedEffect.push(link.sub)
+            }
         }
         link = link.nextSub
     }

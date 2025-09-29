@@ -1,26 +1,29 @@
-import { endTrack, Link, startTrack } from "./system";
+import { endTrack, Link, startTrack, Sub } from "./system";
 
 export let activeSub
+export function setActiveSub(sub) {
+    activeSub = sub
+}
 
-export class ReactiveEffect {
+export class ReactiveEffect implements Sub {
     /**
      * 依赖项链表的头节点
      */
-    private deps: Link | undefined
+    deps: Link | undefined
 
     /**
      * 依赖项链表的尾节点
      */
-    private depsTail: Link | undefined
+    depsTail: Link | undefined
 
-    private tracking: boolean = false
+    tracking: boolean = false
 
     constructor(public fn) {
     }
 
     private run() {
         const prevSub = activeSub
-        activeSub = this
+        setActiveSub(this)
         this.tracking = true
         startTrack(this)
 
@@ -29,7 +32,7 @@ export class ReactiveEffect {
         } finally {
             this.tracking = false
             endTrack(this)
-            activeSub = prevSub
+            setActiveSub(prevSub)
 
         }
     }

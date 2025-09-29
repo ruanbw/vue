@@ -1,12 +1,15 @@
-import { activeSub } from "./effect";
-import type { Dependencie, Link } from "./system";
-import { link, propagate } from "./system";
+import {hasChanged, isObject} from "@vue/shared";
+import {activeSub} from "./effect";
+import type {Dependencie, Link} from "./system";
+import {link, propagate} from "./system";
+import {reactive} from "./reactive";
 
 /**
  * 响应式数据标记
  */
 export enum ReactiveFlags {
-    IS_REF = '__v_isRef'
+    IS_REF = '__v_isRef',
+    IS_REACTIVE = '__v_isReactive'
 }
 
 /**
@@ -24,7 +27,7 @@ export function ref<T>(value?: T): RefImpl<T> {
 /**
  * ref 对象实现类
  */
-export class RefImpl<T> {
+export class RefImpl<T> implements Dependencie {
     private _value: T
 
     private readonly [ReactiveFlags.IS_REF] = true
@@ -32,15 +35,15 @@ export class RefImpl<T> {
     /**
      * 订阅者链表的头节点，理解为我们将的 head
      */
-    private subs: Link
+    subs: Link
 
     /**
      * 订阅者链表的尾节点，理解为我们讲的 tail
      */
-    private subsTail: Link
+    subsTail: Link
 
     constructor(value?: T) {
-        this._value = value
+        this._value = isObject(value) ? reactive(value) : value
     }
 
     get value() {
@@ -50,10 +53,11 @@ export class RefImpl<T> {
     }
 
     set value(newValue) {
-        if (this._value === newValue) return
-        this._value = newValue
-        // 触发订阅者
-        triggerRef(this)
+        if (hasChanged(newValue, this._value)) {
+            this._value = isObject(newValue) ? reactive(newValue) : newValue
+            // 触发订阅者
+            triggerRef(this)
+        }
     }
 }
 
